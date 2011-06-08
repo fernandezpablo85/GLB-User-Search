@@ -1,0 +1,46 @@
+#!/usr/bin/ruby
+require 'rubygems'
+require 'json'
+require 'open-uri'
+
+if ARGV.size <= 0 then
+  puts "usage: find_user <user_name>"
+  exit(1)
+end
+
+separator = "============================="
+
+puts
+puts "==== GLOBANT USER SEARCH ===="
+puts " Searching for: '#{ARGV[0]}'"
+puts separator
+puts
+
+INTERN_URL = 'https://wiki2.globant.com/module/interns/get_intern.do'
+search_term = ARGV[0]
+begin
+  response = open("#{INTERN_URL}?int=#{search_term}").read()
+  response = JSON.parse(response)
+  puts "Found #{response['resultSize']} results:"
+  puts
+  puts separator
+  exit(0) if response['resultSize'] == 0
+  
+  response['interns'].each do |intern|
+    puts "Name: #{intern['name'].capitalize} #{intern['surname'].capitalize}"
+    puts
+    puts "Area: #{intern['details']['area']}"
+    puts "Department: #{intern['details']['department']}"
+    puts "Seniority: #{intern['details']['seniority']}"
+    puts
+    puts "Extension: #{intern['extension']}"
+    puts "External: #{intern['external']}"
+    puts
+    puts "Email: #{intern['email']}"
+    puts separator
+  end
+rescue
+  puts "Oops! there were problems during search :("
+  puts "check that you're connected to Globant's VPN"
+  exit(1)
+end
