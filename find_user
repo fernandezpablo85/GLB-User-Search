@@ -3,44 +3,59 @@ require 'rubygems'
 require 'json'
 require 'open-uri'
 
-if ARGV.size <= 0 then
+SEPARATOR = "============================="
+INTERN_URL = 'https://wiki2.globant.com/module/interns/get_intern.do'
+
+def show_usage
   puts "usage: find_user <user_name>"
   exit(1)
 end
 
-separator = "============================="
+def print_header
+  puts
+  puts "==== GLOBANT USER SEARCH ===="
+  puts " Searching for: '#{ARGV[0]}'"
+  puts SEPARATOR
+  puts
+end
 
-puts
-puts "==== GLOBANT USER SEARCH ===="
-puts " Searching for: '#{ARGV[0]}'"
-puts separator
-puts
+def get_json_response_for term
+  begin
+    response = open("#{INTERN_URL}?int=#{term}").read()
+    JSON.parse(response)
+  rescue
+    puts "Oops! there were problems during search :("
+    puts "check that you're connected to Globant's VPN"
+    exit(1)
+  end
+end
 
-INTERN_URL = 'https://wiki2.globant.com/module/interns/get_intern.do'
-search_term = ARGV[0]
-begin
-  response = open("#{INTERN_URL}?int=#{search_term}").read()
-  response = JSON.parse(response)
+def print_intern intern
+  puts "Name: #{intern['name'].capitalize} #{intern['surname'].capitalize}"
+  puts
+  puts "Area: #{intern['details']['area']}"
+  puts "Department: #{intern['details']['department']}"
+  puts "Seniority: #{intern['details']['seniority']}"
+  puts
+  puts "Extension: #{intern['extension']}"
+  puts "External: #{intern['external']}"
+  puts
+  puts "Email: #{intern['email']}"
+  puts SEPARATOR
+end
+
+def print_results response
   puts "Found #{response['resultSize']} results:"
   puts
-  puts separator
+  puts SEPARATOR
   exit(0) if response['resultSize'] == 0
-  
-  response['interns'].each do |intern|
-    puts "Name: #{intern['name'].capitalize} #{intern['surname'].capitalize}"
-    puts
-    puts "Area: #{intern['details']['area']}"
-    puts "Department: #{intern['details']['department']}"
-    puts "Seniority: #{intern['details']['seniority']}"
-    puts
-    puts "Extension: #{intern['extension']}"
-    puts "External: #{intern['external']}"
-    puts
-    puts "Email: #{intern['email']}"
-    puts separator
-  end
-rescue
-  puts "Oops! there were problems during search :("
-  puts "check that you're connected to Globant's VPN"
-  exit(1)
+  response['interns'].each {|intern| print_intern intern}
 end
+
+if ARGV.size <= 0 then
+  show_usage
+end
+
+print_header
+json_response = get_json_response_for(ARGV[0])
+print_results(json_response)
